@@ -21,6 +21,9 @@ __pycache__/
 
 # Logs & temp
 *.log
+*.db
+*.sqlite
+config/data/
 resumes/*.pdf
 resumes/*.docx
 !resumes/.gitkeep
