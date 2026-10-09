@@ -1,0 +1,37 @@
+# System Configuration for Job Auto Applier & Tracker
+
+google:
+  # Path to OAuth 2.0 Client credentials downloaded from Google Cloud Console
+  client_secrets_file: "config/credentials/credentials.json"
+  # Path where user OAuth token is cached after first login
+  token_file: "config/credentials/token.json"
+  # Target Google Sheet ID (from the spreadsheet URL: https://docs.google.com/spreadsheets/d/<SHEET_ID>/edit)
+  spreadsheet_id: "1UGZpkrm5uTzCGfNM4K_1SfW-c50Dc-fSP-NwcNXR96g"
+  # Title of the spreadsheet tab
+  worksheet_name: "Job Applications"
+  # Scopes required for Gmail and Google Sheets
+  scopes:
+    - "https://www.googleapis.com/auth/spreadsheets"
+    - "https://www.googleapis.com/auth/gmail.readonly"
+    - "https://www.googleapis.com/auth/gmail.modify"
+
+tracker:
+  # How many days back to look for job emails on initial scan
+  lookback_days: 14
+  # Search query filters for Gmail (including India portals Naukri & Indeed)
+  search_queries:
+    - 'subject:("thank you for applying" OR "application received" OR "application sent" OR "application submitted" OR "recruiter viewed" OR "shortlisted" OR "interview" OR "offer" OR "update on your application" OR "status of your application" OR "next steps")'
+    - 'from:(naukri.com OR naukrialerts.com OR indeed.com OR in.indeed.com OR indeedapply.com OR greenhouse.io OR lever.co OR workday OR smartrecruiters OR ashbyhq OR linkedin.com)'
+  # Enable auto-marking processed emails with a Gmail label
+  apply_gmail_label: "JobTracker/Processed"
+
+applier:
+  # Browser settings
+  headless: true
+  slow_mo_ms: 500
+  timeout_ms: 30000
+  # Safety controls
+  daily_application_limit: 25
+  # Paths
+  profile_path: "config/profile.yaml"
+  resume_path: "resumes/resume.pdf"

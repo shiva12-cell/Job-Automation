@@ -1,0 +1,33 @@
+# Virtual Environment
+.venv/
+env/
+venv/
+
+# Environment Variables & Secrets
+.env
+config/credentials/
+*.json
+!tests/fixtures/*.json
+token.json
+credentials.json
+service_account.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Logs & temp
+*.log
+resumes/*.pdf
+resumes/*.docx
+!resumes/.gitkeep
+naukri_*.png
+scratch_*.png
+scratch/
+
+# OS
+.DS_Store
+Thumbs.db

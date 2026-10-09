@@ -1,0 +1,17 @@
+# AutoJob AI & Streamlit Dashboard Dependencies
+streamlit>=1.35.0
+plotly>=5.20.0
+pandas>=2.0.0
+openpyxl>=3.1.2
+PyYAML>=6.0.0
+fastapi>=0.110.0
+uvicorn>=0.28.0
+playwright>=1.40.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+google-api-python-client>=2.100.0
+google-auth>=2.20.0
+google-auth-oauthlib>=1.1.0
+gspread>=6.0.0
+pypdf>=4.0.0
+python-multipart>=0.0.9

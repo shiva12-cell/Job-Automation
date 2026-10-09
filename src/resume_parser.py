@@ -1,0 +1,274 @@
+"""
+Universal Resume Parser for AutoJob AI.
+Extracts contact information, domain skills, education, experience,
+and generates auto-suggested screening question answers from uploaded PDF resumes.
+"""
+
+import os
+import re
+from pathlib import Path
+from typing import Dict, Any, List, Set, Optional
+from pypdf import PdfReader
+
+# Comprehensive skills taxonomy across Tech, Data, Product, Engineering & Business
+SKILL_TAXONOMY = [
+    # Data & Analytics
+    "python", "sql", "mysql", "postgresql", "mongodb", "sqlite", "excel", "advanced excel",
+    "power bi", "tableau", "looker", "looker studio", "data analysis", "data analytics",
+    "eda", "exploratory data analysis", "data visualization", "pandas", "numpy", "scipy",
+    "scikit-learn", "sklearn", "matplotlib", "seaborn", "statistics", "statistical analysis",
+    "hypothesis testing", "machine learning", "deep learning", "nlp", "computer vision",
+    "kpi", "reporting", "dashboard", "etl", "data cleaning", "regression", "classification",
+    "clustering", "business intelligence", "bi", "churn analysis", "data warehousing",
+    "snowflake", "bigquery", "redshift", "spark", "pyspark", "hadoop", "dbt", "airflow",
+    # Business Analysis & Product Management
+    "business analyst", "business analysis", "brd", "frd", "prd", "user stories",
+    "product management", "product owner", "ai product owner", "roadmap", "jira", "confluence",
+    "agile", "scrum", "kanban", "market research", "stakeholder management", "sdlc",
+    "requirements gathering", "process modeling", "gap analysis", "swot analysis",
+    "operations analyst", "systems analyst", "generative ai", "ai", "llm", "prompt engineering",
+    # Software Engineering & Web
+    "java", "spring boot", "c++", "c#", "c", ".net", "dotnet", "golang", "rust", "php",
+    "javascript", "typescript", "react", "react.js", "next.js", "vue", "angular", "node.js",
+    "express", "fastapi", "flask", "django", "html", "html5", "css", "css3", "tailwind",
+    "bootstrap", "rest api", "graphql", "microservices", "oop", "data structures", "algorithms",
+    # Cloud, DevOps & Tools
+    "aws", "azure", "gcp", "google cloud", "docker", "kubernetes", "ci/cd", "git", "github",
+    "gitlab", "linux", "bash", "terraform", "ansible", "jenkins",
+    # Quality Assurance & Testing
+    "selenium", "playwright", "cypress", "junit", "pytest", "manual testing", "automation testing",
+]
+
+MAJOR_INDIAN_CITIES = [
+    "gurugram", "gurgaon", "noida", "delhi", "new delhi", "bengaluru", "bangalore",
+    "hyderabad", "pune", "mumbai", "chennai", "kolkata", "ahmedabad", "jaipur",
+    "chandigarh", "indore", "kochi", "coimbatore"
+]
+
+
+def extract_text_from_pdf(pdf_path: str | Path) -> str:
+    """Extracts raw plain text from a PDF resume file."""
+    path = Path(pdf_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Resume file not found at: {path}")
+
+    reader = PdfReader(str(path))
+    pages_text = []
+    for page in reader.pages:
+        text = page.extract_text()
+        if text:
+            pages_text.append(text)
+    return "\n".join(pages_text)
+
+
+def parse_resume_data(text: str, default_role: str = "Data Analyst") -> Dict[str, Any]:
+    """
+    Parses resume plain text and extracts:
+    - Personal info (name, email, phone, location, linkedin, github)
+    - Education (degree, university, graduation year)
+    - Technical and domain skills
+    - Years of experience
+    - Suggested screening answers for Naukri recruiter questions
+    """
+    lines = [l.strip() for l in text.split("\n") if l.strip()]
+    first_few_lines = lines[:8] if lines else []
+    header_block = " ".join(first_few_lines)
+
+    # 1. Email extraction
+    email_match = re.search(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+", text)
+    email = email_match.group(0) if email_match else ""
+
+    # 2. Phone extraction (handles Indian +91 and 10-digit formats)
+    phone_match = re.search(r"(?:\+91[\s-]?)?[6-9]\d{9}", text.replace(" ", ""))
+    phone = phone_match.group(0) if phone_match else ""
+    if phone and not phone.startswith("+91") and len(phone) == 10:
+        phone = f"+91 {phone}"
+
+    # 3. LinkedIn URL
+    cleaned_url_text = re.sub(r"\s*-\s*", "-", text)
+    linkedin_match = re.search(r"(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([a-zA-Z0-9\-_]+)", cleaned_url_text)
+    linkedin_url = f"https://www.linkedin.com/in/{linkedin_match.group(1)}" if linkedin_match else ""
+
+    # 4. GitHub URL
+    github_match = re.search(r"(?:https?:\/\/)?(?:www\.)?github\.com\/([a-zA-Z0-9\-_]+)", cleaned_url_text)
+    github_url = f"https://github.com/{github_match.group(1)}" if github_match else ""
+
+    # 5. Candidate Name extraction (first line or extracted before email)
+    name = ""
+    for line in first_few_lines:
+        clean_line = re.sub(r"[|•,].*", "", line).strip()
+        # Ensure it looks like a person's name (letters and spaces, 2 to 4 words, no symbols)
+        if re.match(r"^[A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){1,3}$", clean_line):
+            if not any(k in clean_line.lower() for k in ["resume", "curriculum", "cv", "profile", "contact"]):
+                name = clean_line
+                break
+    if not name and lines:
+        name = lines[0].split("|")[0].strip()
+
+    # Split name into first and last
+    name_parts = name.split()
+    first_name = name_parts[0] if name_parts else "Candidate"
+    last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else ""
+
+    # 6. Location extraction
+    detected_location = "Pan-India"
+    lower_text = text.lower()
+    for city in MAJOR_INDIAN_CITIES:
+        if city in lower_text[:1000]:  # Look in the top portion
+            detected_location = city.title()
+            if city in ["gurgaon", "gurugram"]:
+                detected_location = "Gurugram"
+            elif city in ["bengaluru", "bangalore"]:
+                detected_location = "Bengaluru"
+            break
+
+    # 7. Degree and Education extraction
+    degree = ""
+    degree_patterns = [
+        r"\bB\.?Tech\b(?:\s+(?:in\s+)?[\w\s]+)?",
+        r"\bB\.?E\.?\b(?:\s+(?:in\s+)?[\w\s]+)?",
+        r"\bB\.?Sc\b(?:\s+(?:in\s+)?[\w\s]+)?",
+        r"\bBCA\b",
+        r"\bMCA\b",
+        r"\bM\.?Tech\b",
+        r"\bMBA\b",
+        r"\bBachelor(?:'s)?(?:\s+(?:of\s+)?[\w\s]+)?",
+        r"\bMaster(?:'s)?(?:\s+(?:of\s+)?[\w\s]+)?",
+    ]
+    for pattern in degree_patterns:
+        m = re.search(pattern, text, re.IGNORECASE)
+        if m:
+            degree = m.group(0).strip()
+            # Clean trailing words
+            degree = re.split(r"[,|\n\(\)]", degree)[0].strip()
+            break
+    if not degree:
+        degree = "Bachelor's Degree"
+
+    # University / Institute extraction
+    university = ""
+    univ_match = re.search(r"([A-Za-z\s]{3,40}(?:University|Institute|College|Academy))", text, re.IGNORECASE)
+    if univ_match:
+        university = univ_match.group(1).strip()
+    if not university:
+        university = "University Graduate"
+
+    # Graduation year extraction
+    grad_year = 2024
+    year_match = re.search(r"\b(201\d|202\d)\b", text)
+    if year_match:
+        try:
+            grad_year = int(year_match.group(1))
+        except Exception:
+            pass
+
+    # 8. Skills extraction
+    extracted_skills: List[str] = []
+    seen_skills = set()
+    for skill in SKILL_TAXONOMY:
+        pattern = rf"\b{re.escape(skill)}\b"
+        if re.search(pattern, lower_text):
+            canon = skill.title()
+            if skill in ["sql", "etl", "eda", "kpi", "nlp", "llm", "oop", "sdlc", "brd", "frd", "prd", "ci/cd", "bi"]:
+                canon = skill.upper()
+            elif skill == "power bi":
+                canon = "Power BI"
+            elif skill == "scikit-learn":
+                canon = "Scikit-Learn"
+            elif skill == "node.js":
+                canon = "Node.js"
+
+            if canon.lower() not in seen_skills:
+                seen_skills.add(canon.lower())
+                extracted_skills.append(canon)
+
+    # 9. Experience calculation
+    # Check for senior indicators vs fresher
+    exp_years = 0
+    exp_range_str = "0 - 1 years (Fresher / Entry Level)"
+    exp_matches = re.findall(r"(\d+)\+?\s*(?:years?|yrs?)\s*(?:of)?\s*experience", lower_text)
+    if exp_matches:
+        try:
+            exp_years = int(exp_matches[0])
+            exp_range_str = f"{exp_years} years"
+        except Exception:
+            pass
+    elif any(k in lower_text for k in ["fresher", "entry level", "student", "graduate"]):
+        exp_years = 0
+        exp_range_str = "0 - 1 years (Fresher)"
+
+    # Current Title heuristics
+    current_title = default_role
+    title_candidates = [
+        "Data Analyst", "Business Analyst", "AI Product Owner", "Product Manager",
+        "Software Engineer", "Full Stack Developer", "Python Developer", "Data Scientist",
+        "Frontend Developer", "Backend Developer", "QA Engineer", "DevOps Engineer"
+    ]
+    for tc in title_candidates:
+        if tc.lower() in lower_text[:1500]:
+            current_title = tc
+            break
+
+    # 10. Generate Candidate Summary & Headline
+    top_skills_preview = ", ".join(extracted_skills[:6]) if extracted_skills else "Python, SQL, Analytics"
+    headline = f"{current_title} with competencies in {top_skills_preview}."
+
+    # 11. Generate Auto-Suggested Screening Question Answers
+    screening_answers = {
+        "gender": "Male",
+        "race": "Asian",
+        "veteran": "I am not a protected veteran",
+        "disability": "I do not have a disability",
+        "salary": "6 LPA",
+        "ctc": "6 LPA",
+        "expected_ctc": "6 LPA",
+        "current_ctc": "0 / Fresher" if exp_years == 0 else "4.5 LPA",
+        "experience": str(exp_years),
+        "years_of_experience": str(exp_years),
+        "total_experience": str(exp_years),
+        "relevant_experience": str(exp_years),
+        "notice": "Immediate / 0 days",
+        "notice_period": "Immediate",
+        "start_date": "Immediate",
+        "city": detected_location,
+        "location": detected_location,
+        "current_location": detected_location,
+        "university": university,
+        "college": university,
+        "degree": degree,
+        "headline": headline,
+        "summary": headline,
+        "relocate": "Yes",
+        "relocation": "Yes, completely open to relocate",
+        "hybrid_remote": "Open to Remote, Hybrid, or On-site",
+        "sponsorship": "No",
+        "authorized": "Yes",
+        "skills": ", ".join(extracted_skills),
+    }
+
+    return {
+        "personal_info": {
+            "first_name": first_name,
+            "last_name": last_name,
+            "full_name": f"{first_name} {last_name}".strip(),
+            "email": email,
+            "phone": phone,
+            "location": detected_location,
+            "current_title": current_title,
+            "linkedin_url": linkedin_url,
+            "github_url": github_url,
+            "portfolio_url": "",
+        },
+        "education": {
+            "degree": degree,
+            "university": university,
+            "graduation_year": grad_year,
+        },
+        "experience": {
+            "years_of_experience": exp_years,
+            "target_experience_range": exp_range_str,
+            "skills": extracted_skills,
+        },
+        "screening_answers": screening_answers,
+        "headline": headline,
+    }

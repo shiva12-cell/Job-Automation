@@ -1,0 +1,94 @@
+# Candidate Profile for Job Auto Applier
+# Candidate: Shiva Upadhyay
+
+personal_info:
+  first_name: "Shiva"
+  last_name: "Upadhyay"
+  email: "shivaupadhyay8829@gmail.com"
+  phone: "+91 7668559852"
+  location: "Gurugram"
+  current_company: ""
+  current_title: "Data Analyst"
+  linkedin_url: "https://www.linkedin.com/in/shiva-upadhyay"
+  github_url: "https://github.com/shiva12-cell"
+  portfolio_url: ""
+
+work_authorization:
+  authorized_to_work_in_country: true
+  requires_sponsorship_now: false
+  requires_sponsorship_future: false
+  citizenship_status: "Authorized / Citizen"
+
+compensation:
+  desired_lpa: "6 LPA"
+  min_lpa: 5.0
+  max_lpa: 8.0
+  desired_salary_inr: 600000
+  notice_period_weeks: 0
+  willing_to_relocate: true
+
+education:
+  degree: "B.Tech CSE"
+  university: "JECRC UNIVERSITY"
+  graduation_year: 2024
+  gpa: "8.2"
+
+experience:
+  years_of_experience: 0
+  target_experience_range: "0 - 1 years (Fresher)"
+  skills:
+    - Python
+    - SQL
+    - Power BI
+    - Tableau
+    - Excel
+    - Advanced Excel
+    - Pandas
+    - NumPy
+    - Data Analysis
+    - EDA
+    - Machine Learning
+    - Data Visualization
+    - AI Automation
+    - Git
+
+# Standard answers to common custom screening questions
+screening_answers:
+  "gender": "Male"
+  "race": "Asian"
+  "veteran": "I am not a protected veteran"
+  "disability": "I do not have a disability"
+  "salary": "6 LPA"
+  "ctc": "6 LPA"
+  "expected_ctc": "6 LPA"
+  "current_ctc": "0 / Fresher"
+  "experience": "0"
+  "years_of_experience": "0"
+  "total_experience": "0"
+  "notice": "Immediate / 0 days"
+  "notice_period": "Immediate"
+  "start_date": "Immediate"
+  "city": "Gurugram"
+  "location": "Gurugram"
+  "university": "JECRC UNIVERSITY"
+  "college": "JECRC UNIVERSITY"
+  "headline": "Data Analyst | Python (Pandas, NumPy) | SQL & Database Querying | Power BI & Tableau Dashboards | Advanced Excel | Statistical Data Analysis & EDA | B.Tech CSE 2024 | Immediate Joiner"
+  "summary": "Results-driven Data Analyst (B.Tech CSE, 2024 graduate) with hands-on expertise in Python, SQL, Power BI, Advanced Excel, and data visualization. Proven track record of designing interactive business dashboards, performing in-depth exploratory data analysis (EDA), and deriving actionable KPI insights. Proficient in advanced SQL queries, joins, window functions, and Python libraries (Pandas, NumPy). Immediate joiner."
+  "relocate": "Yes"
+  "relocation": "Yes, completely open to relocate"
+  "hybrid_remote": "Open to Remote, Hybrid, or On-site"
+  "how_did_you_hear": "LinkedIn"
+
+# Default cover letter template
+cover_letter: |
+  Dear Hiring Team,
+
+  I am writing to express my strong interest in this position. As a graduate from JECRC UNIVERSITY with a strong foundation in Data Analytics, Python, SQL, and Power BI dashboards, EDA, and business metrics, I have developed analytical pipelines, KPI dashboards, and data-driven solutions.
+
+  I am eager to contribute to your team with strong problem-solving skills, data insights, and dedication.
+
+  Thank you for considering my application. I look forward to discussing how my skills align with your goals.
+
+  Best regards,
+  Shiva Upadhyay
+  shivaupadhyay8829@gmail.com | +91 7668559852
