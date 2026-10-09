@@ -10,11 +10,20 @@ from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from src.autonomous_engine import engine
 
-app = FastAPI(title="AutoJob AI Dashboard", version="2.0.0")
+enable_docs = os.getenv("ENABLE_API_DOCS", "true").lower() in ("true", "1", "yes")
+cors_origins_raw = os.getenv("CORS_ALLOWED_ORIGINS", "*")
+cors_origins = [o.strip() for o in cors_origins_raw.split(",") if o.strip()] if cors_origins_raw != "*" else ["*"]
+
+app = FastAPI(
+    title="AutoJob AI Dashboard",
+    version="2.0.0",
+    docs_url="/docs" if enable_docs else None,
+    redoc_url="/redoc" if enable_docs else None,
+)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
